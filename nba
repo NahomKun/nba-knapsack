@@ -1,6 +1,6 @@
 library(lpSolveAPI)
 
-projection <- read.csv("/Users/olio/Downloads/Projection/NBA/Better.csv")
+projection <- read.csv("Better.csv")
 
 find_teams <- function(train, cap, constraint = c("none", "all_diff", "no_opp"), 
                        league = c("FanDuel", "DraftKings"), setplayers = NULL, removeteams = NULL)
