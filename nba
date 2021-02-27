@@ -1,0 +1,117 @@
+library(lpSolveAPI)
+
+projection <- read.csv("/Users/olio/Downloads/Projection/NBA/Better.csv")
+
+find_teams <- function(train, cap, constraint = c("none", "all_diff", "no_opp"), 
+                       league = c("FanDuel", "DraftKings"), setplayers = NULL, removeteams = NULL)
+{
+colnames(projection) <- c("Id", "Position", "Player", "Salary", "Points", "Team", "Opponent")
+
+pg <- ifelse(projection$Position == "PG", 1,0)
+sg <- ifelse(projection$Position == "SG", 1,0)
+sf <- ifelse(projection$Position == "SF", 1,0)
+pf <- ifelse(projection$Position == "PF", 1,0)
+c <- ifelse(projection$Position == "C", 1,0)
+  
+lpfantasy <- make.lp(0, nrow(projection))
+
+set.objfn(lpfantasy, projection$Points)
+
+set.type(lpfantasy, seq(1, nrow(projection), by=1), type = c("binary"))
+
+if(league == "FanDuel") {
+  add.constraint(lpfantasy, pg, "=", 2)
+  add.constraint(lpfantasy, sg, "=", 2)
+  add.constraint(lpfantasy, sf, "=", 2)
+  add.constraint(lpfantasy, pf, "=", 2)
+  add.constraint(lpfantasy, c, "=", 1)
+  }
+  
+  add.constraint(lpfantasy, projection$Salary, "<=", cap)
+  lp.control(lpfantasy, sense = 'max')
+  
+  team_names <- levels(factor(projection$Team))
+  constraint <- match.arg(constraint)
+  
+  if(constraint == "no_opp") {
+    team_names <- levels(factor(projection$Team))
+    for (i in 1:lenght(team_names)) {
+      no_two <- ifelse(projection$Team == team_names[i],1,0)
+      add.constraint(lpfantasy, no_two, "<=",2)
+    }
+    for (j in 1:nrow(projection)) {
+      no_opposing <- ifelse(projection$Opponent == projection$Team[j], 1,0)
+      no_opposing[j] <- 1
+      for (k in 1:nrow(projection)) {
+        out <- rep(0 , nrow(projection))
+        out[j] <- 1
+        out[k] <- no_opposing[k]
+        add.constraint(lpfantasy, out, "<=",1)
+        
+      }
+    }
+  }
+  
+if(!is.null(setplayers)){
+  if(league == "FanDuel") {
+    if((sum(setplayers$Position == "PG") > 2) || (sum(setplayers$Position == "SG") > 2) || (sum(setplayers$Position == "SF") > 2) ||
+       (sum(setplayers$Position == "PF") > 2) || (sum(setplayers$Position == "C") > 1))
+      stop("One of your position has too many players")
+  }
+  for (k in 1:nrow(setplayers)) {
+    add.constraint(lpfantasy, ifelse(setplayers$Id[k] == projection$ID, 1, 0), "=",1)    
+  }
+}  
+  
+if(!is.null(removeteams)){
+  if(nrow(removeteams) != nrow(projection))
+    stop("Your team restriction do not match the number of players included in the projection set")
+  for (m in 1:ncol(removeteams)) {
+    add.constraint(lpfantasy, removeteams[, m], "<=", 8)
+  }
+}  
+  
+team <- data.frame(matrix(0,1,ncol(projection) + 2))
+colnames(team) <- c(colnames(projection), "TeamSalary", "TeamPoints")
+
+solve.lpExtPtr(lpfantasy)
+if(solve.lpExtPtr(lpfantasy)!= 0)
+  stop("Optimization failed at some point")
+
+  
+team_select <- subset(data.frame(projection, get.variables(lpfantasy)), get.variables.lpfantasy. == 1)
+team_select$get.variables.lpfantasy. <- NULL
+team_select$TeamSalary <- sum(team_select$Salary)
+team_select$TeamPoints <- sum(team_select$Points)
+team <- rbind(team, team_select)
+team <- team[-1,]
+rownames(team) <- NULL
+team
+}
+
+test1 <- find_teams(projection, 60000, constraint = "none", league = "FanDuel", setplayers = NULL, removeteams = NULL)
+
+#########################################pls##################################
+
+top_teams <- function(projection, num_top, cap, constraint, league, setplayers = NULL){
+  result <- find_teams(projection, cap, constraint = constraint, league = league, setplayers = setplayers)
+  restrict <- as.matrix(rep(0,nrow(projection)))
+  restrict[match(result$ID, projection$ID), 1] <-1
+ j <- 1
+
+
+while (j < num_top) {
+  resultnew <- find_teams(projection, cap, constraint = constraint, league = league, setplayers = setplayers, removeteams = restrict)
+  restrict <- cbind(restrict, rep(0, nrow(restrict)))
+  restrict[match(resultnew$Id, projection$Id), j] <- 1
+  result <- rbind(result, resultnew)
+  j <- j + 1
+  }
+
+TeamNumber <- rep(1:num_top, each = 9)
+result <- cbind.data.frame(result, TeamNumber)
+result
+}
+
+test5 <- top_teams(projection, 6, 60000, constraint = "none", league = "FanDuel")
+
