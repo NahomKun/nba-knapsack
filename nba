@@ -113,5 +113,5 @@ result <- cbind.data.frame(result, TeamNumber)
 result
 }
 
-test5 <- top_teams(projection, 6, 60000, constraint = "none", league = "FanDuel")
+test2 <- top_teams(projection, 6, 60000, constraint = "none", league = "FanDuel")
 
