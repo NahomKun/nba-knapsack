@@ -5,7 +5,7 @@ projection <- read.csv("Better.csv")
 find_teams <- function(train, cap, constraint = c("none", "all_diff", "no_opp"), 
                        league = c("FanDuel", "DraftKings"), setplayers = NULL, removeteams = NULL)
 {
-colnames(projection) <- c("Id", "Position", "Player", "Salary", "Points", "Team", "Opponent")
+colnames(projection) <- c("ID", "Position", "Player", "Salary", "Points", "Team", "Opponent")
 
 pg <- ifelse(projection$Position == "PG", 1,0)
 sg <- ifelse(projection$Position == "SG", 1,0)
@@ -103,7 +103,7 @@ top_teams <- function(projection, num_top, cap, constraint, league, setplayers =
 while (j < num_top) {
   resultnew <- find_teams(projection, cap, constraint = constraint, league = league, setplayers = setplayers, removeteams = restrict)
   restrict <- cbind(restrict, rep(0, nrow(restrict)))
-  restrict[match(resultnew$Id, projection$Id), j] <- 1
+  restrict[match(resultnew$ID, projection$ID), j] <- 1
   result <- rbind(result, resultnew)
   j <- j + 1
   }
