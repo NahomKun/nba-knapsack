@@ -1,6 +1,6 @@
 library(lpSolveAPI)
 
-projection <- read.csv("Better.csv")
+projection <- read.csv("/Users/Nahom/Downloads/Projection/NBA/Better.csv")
 
 find_teams <- function(train, cap, constraint = c("none", "all_diff", "no_opp"), 
                        league = c("FanDuel", "DraftKings"), setplayers = NULL, removeteams = NULL)
@@ -25,7 +25,17 @@ if(league == "FanDuel") {
   add.constraint(lpfantasy, sf, "=", 2)
   add.constraint(lpfantasy, pf, "=", 2)
   add.constraint(lpfantasy, c, "=", 1)
-  }
+}
+
+if(league == "DraftKings"){
+  dk_total <- pg + sg + sf + pf + c
+  add.constraint(lpfantasy, pg, "<=", 3)
+  add.constraint(lpfantasy, sg, "<=", 3)
+  add.constraint(lpfantasy, sf, "<=", 3)
+  add.constraint(lpfantasy, pf, "<=", 3)
+  add.constraint(lpfantasy, c, "<=", 2)
+  add.constraint(lpfantasy, dk_total, "=", 8)
+}
   
   add.constraint(lpfantasy, projection$Salary, "<=", cap)
   lp.control(lpfantasy, sense = 'max')
@@ -58,8 +68,16 @@ if(!is.null(setplayers)){
        (sum(setplayers$Position == "PF") > 2) || (sum(setplayers$Position == "C") > 1))
       stop("One of your position has too many players")
   }
+  
+  if(league == "DraftKings"){
+    if((sum(setplayers$Position == "PG") > 3) || (sum(setplayers$Position == "SG") > 3) || (sum(setplayers$Position == "SF") > 3) ||
+       (sum(setplayers$Position == "PF") > 3) || (sum(setplayers$Position == "C") > 2))
+      stop("One of your position has too many players")
+    
+  }
+  
   for (k in 1:nrow(setplayers)) {
-    add.constraint(lpfantasy, ifelse(setplayers$Id[k] == projection$ID, 1, 0), "=",1)    
+    add.constraint(lpfantasy, ifelse(setplayers$ID[k] == projection$ID, 1, 0), "=",1)    
   }
 }  
   
@@ -89,9 +107,10 @@ rownames(team) <- NULL
 team
 }
 
-test1 <- find_teams(projection, 60000, constraint = "none", league = "FanDuel", setplayers = NULL, removeteams = NULL)
+FD <- find_teams(projection, 60000, constraint = "none", league = "FanDuel", setplayers = NULL, removeteams = NULL)
+DK <- find_teams(projection, 60000, constraint = "none", league = "DraftKings", setplayers = NULL, removeteams = NULL)
 
-#########################################pls##################################
+###########################################################################
 
 top_teams <- function(projection, num_top, cap, constraint, league, setplayers = NULL){
   result <- find_teams(projection, cap, constraint = constraint, league = league, setplayers = setplayers)
@@ -113,5 +132,5 @@ result <- cbind.data.frame(result, TeamNumber)
 result
 }
 
-test2 <- top_teams(projection, 6, 60000, constraint = "none", league = "FanDuel")
+test2 <- top_teams(projection, 150, 60000, constraint = "none", league = "FanDuel")
 
