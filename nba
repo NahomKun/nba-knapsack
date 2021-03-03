@@ -2,10 +2,11 @@ library(lpSolveAPI)
 
 projection <- read.csv("/Users/olio/Downloads/Projection/NBA/Better.csv")
 
-find_teams <- function(train, cap, constraint = c("none", "all_diff", "no_opp"), 
+find_teams <- function(projection, cap, constraint = c("none", "all_diff", "no_opp"), 
                        league = c("FanDuel", "DraftKings"), setplayers = NULL, removeteams = NULL)
 {
 colnames(projection) <- c("ID", "Position", "Player", "Salary", "Points", "Team", "Opponent")
+
 
 pg <- ifelse(projection$Position == "PG", 1,0)
 sg <- ifelse(projection$Position == "SG", 1,0)
@@ -106,11 +107,16 @@ team <- team[-1,]
 rownames(team) <- NULL
 team
 }
-
+#####################################Single Best Lineup##############################################
 FD <- find_teams(projection, 60000, constraint = "none", league = "FanDuel", setplayers = NULL, removeteams = NULL)
 DK <- find_teams(projection, 50000, constraint = "none", league = "DraftKings", setplayers = NULL, removeteams = NULL)
 
-###########################################################################
+###################################Force Players Into LineUp########################################
+
+setplayers <- subset(projection, (ID == 1 | ID == 3))
+ForcePlayers <- find_teams(projection, 60000, constraint = "none", league = "FanDuel", setplayers = setplayers, removeteams = NULL)
+
+###################################Top However Many Teams#########################################
 
 top_teams <- function(projection, num_top, cap, constraint, league, setplayers = NULL){
   result <- find_teams(projection, cap, constraint = constraint, league = league, setplayers = setplayers)
@@ -127,14 +133,15 @@ while (j < num_top) {
   j <- j + 1
   }
 if(league == "Fanduel"){
-  TeamNumber <- rep(1:num_top, each = 9)
-  result <- cbind.data.frame(result, TeamNumber)
-  result}
+TeamNumber <- rep(1:num_top, each = 9)
+result <- cbind.data.frame(result, TeamNumber)
+result}
  
 if(league == "DraftKings"){
   TeamNumber <- rep(1:num_top, each = 8)
   result <- cbind.data.frame(result, TeamNumber)
-  result}
+  result
+}
 }
 
 FDMultiy <- top_teams(projection, 10, 60000, constraint = "none", league = "FanDuel")
