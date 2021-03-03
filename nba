@@ -108,7 +108,7 @@ team
 }
 
 FD <- find_teams(projection, 60000, constraint = "none", league = "FanDuel", setplayers = NULL, removeteams = NULL)
-DK <- find_teams(projection, 60000, constraint = "none", league = "DraftKings", setplayers = NULL, removeteams = NULL)
+DK <- find_teams(projection, 50000, constraint = "none", league = "DraftKings", setplayers = NULL, removeteams = NULL)
 
 ###########################################################################
 
@@ -138,4 +138,4 @@ if(league == "DraftKings"){
 }
 
 FDMultiy <- top_teams(projection, 10, 60000, constraint = "none", league = "FanDuel")
-DKMultiy <- top_teams(projection, 10, 60000, constraint = "none", league = "DraftKings")
+DKMultiy <- top_teams(projection, 10, 50000, constraint = "none", league = "DraftKings")
