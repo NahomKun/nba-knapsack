@@ -1,6 +1,6 @@
 library(lpSolveAPI)
 
-projection <- read.csv("/Users/Nahom/Downloads/Projection/NBA/Better.csv")
+projection <- read.csv("/Users/olio/Downloads/Projection/NBA/Better.csv")
 
 find_teams <- function(train, cap, constraint = c("none", "all_diff", "no_opp"), 
                        league = c("FanDuel", "DraftKings"), setplayers = NULL, removeteams = NULL)
@@ -126,11 +126,16 @@ while (j < num_top) {
   result <- rbind(result, resultnew)
   j <- j + 1
   }
-
-TeamNumber <- rep(1:num_top, each = 9)
-result <- cbind.data.frame(result, TeamNumber)
-result
+if(league == "Fanduel"){
+  TeamNumber <- rep(1:num_top, each = 9)
+  result <- cbind.data.frame(result, TeamNumber)
+  result}
+ 
+if(league == "DraftKings"){
+  TeamNumber <- rep(1:num_top, each = 8)
+  result <- cbind.data.frame(result, TeamNumber)
+  result}
 }
 
-test2 <- top_teams(projection, 150, 60000, constraint = "none", league = "FanDuel")
-
+FDMultiy <- top_teams(projection, 10, 60000, constraint = "none", league = "FanDuel")
+DKMultiy <- top_teams(projection, 10, 60000, constraint = "none", league = "DraftKings")
